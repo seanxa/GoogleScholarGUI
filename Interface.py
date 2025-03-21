@@ -288,15 +288,15 @@ class Ui_Widget(QtWidgets.QMainWindow):
         self.groupBox_3.setTitle(_translate("MainWindow", "防反爬设置"))
         self.label_10.setText(_translate("MainWindow", "非专业人士请勿自行设置"))
         self.label_11.setText(_translate("MainWindow", "随机agents"))
-        self.lineEditAgents.setText(_translate("MainWindow", "agents.txt"))
+        self.lineEditAgents.setText(_translate("MainWindow", "./config/agents.txt"))
         self.pushButtonSelectAgents.setText(_translate("MainWindow", "选择文件"))
         self.checkBoxAgentsFlag.setText(_translate("MainWindow", "启用"))
         self.label_12.setText(_translate("MainWindow", "随机谷歌域名"))
-        self.lineEditDomains.setText(_translate("MainWindow", "domains.txt"))
+        self.lineEditDomains.setText(_translate("MainWindow", "./config/domains.txt"))
         self.pushButtonSelectDomains.setText(_translate("MainWindow", "选择文件"))
         self.checkBoxDomainsFlag.setText(_translate("MainWindow", "启用"))
         self.label_13.setText(_translate("MainWindow", "IP代理池"))
-        self.lineEditIPs.setText(_translate("MainWindow", "ips.txt"))
+        self.lineEditIPs.setText(_translate("MainWindow", "./config/ips.txt"))
         self.pushButtonSelectIPs.setText(_translate("MainWindow", "选择文件"))
         self.checkBoxIPsFlag.setText(_translate("MainWindow", "启用"))
         self.groupBox_5.setTitle(_translate("MainWindow", "日志"))
@@ -326,8 +326,9 @@ class Ui_Widget(QtWidgets.QMainWindow):
     def selectResultSaveFile(self):
         fileName, filetype = QFileDialog.getSaveFileName(self,
                                     "选取文件",
-                                    "./",
-                                    "Text Files (*.xlsx);;All Files (*)")   #设置文件扩展名过滤,注意用双分号间隔
+                                    "./Results.xlsx",
+                                    "Excel Files (*.xlsx);;All Files (*)",
+                                    "Excel Files (*.xlsx)")   #设置文件扩展名过滤,注意用双分号间隔
         self.lineEditResultSaveFile.setText(fileName)
         if fileName=="":
             self.lineEditResultSaveFile.setText(r'C:/Users/' + os.environ['USERNAME'] + r'/Downloads/GoogleScholar/Results.xlsx')
@@ -336,8 +337,9 @@ class Ui_Widget(QtWidgets.QMainWindow):
     def selectLinkSaveFile(self):
         fileName, filetype = QFileDialog.getSaveFileName(self,
                                     "选取文件",
-                                    "./",
-                                    "Text Files (*.txt);;All Files (*)")   #设置文件扩展名过滤,注意用双分号间隔
+                                    "./PDFList.txt",
+                                    "Text Files (*.txt);;All Files (*)",
+                                    "Text Files (*.txt)")   #设置文件扩展名过滤,注意用双分号间隔
         self.lineEditLinkSaveFile.setText(fileName)
         if fileName=="":
             self.lineEditLinkSaveFile.setText(r'C:/Users/' + os.environ['USERNAME'] + r'/Downloads/GoogleScholar/PDFList.txt')
@@ -353,31 +355,31 @@ class Ui_Widget(QtWidgets.QMainWindow):
     def selectAgents(self):
         fileName, filetype = QFileDialog.getOpenFileName(self,
                                     "选取文件",
-                                    "./",
+                                    "./config/agents.txt",
                                     "Text Files (*.txt);;All Files (*)")   #设置文件扩展名过滤,注意用双分号间隔
         self.lineEditAgents.setText(fileName)
         if fileName=="":
-            self.lineEditAgents.setText(r"agents.txt")
+            self.lineEditAgents.setText(r"./config/agents.txt")
 
     # 选择domains保存文件
     def selectDomains(self):
         fileName, filetype = QFileDialog.getOpenFileName(self,
                                     "选取文件",
-                                    "./",
+                                    "./config/domains.txt",
                                     "Text Files (*.txt);;All Files (*)")   #设置文件扩展名过滤,注意用双分号间隔
         self.lineEditDomains.setText(fileName)
         if fileName=="":
-            self.lineEditDomains.setText(r"domains.txt")
+            self.lineEditDomains.setText(r"./config/domains.txt")
 
     # 选择ips保存文件
     def selectIPs(self):
         fileName, filetype = QFileDialog.getOpenFileName(self,
                                     "选取文件",
-                                    "./",
+                                    "./config/ips.txt",
                                     "Text Files (*.txt);;All Files (*)")   #设置文件扩展名过滤,注意用双分号间隔
         self.lineEditIPs.setText(fileName)
         if fileName=="":
-            self.lineEditIPs.setText(r"ips.txt")
+            self.lineEditIPs.setText(r"./config/ips.txt")
 
     # 设置时间不限点击效果
     def setAnyTime(self):
@@ -512,7 +514,8 @@ class Ui_Widget(QtWidgets.QMainWindow):
             # 组装URL，太太太气人了，谷歌学术又访问不了了
             # 链接https://scholar.google.com.hk/scholar?hl=zh-CN&as_sdt=0%2C5&q=%E2%80%9CEntrepreneurial+failure%E2%80%9D+OR+%E2%80%9Cbusiness+failure%E2%80%9D&btnG=
             # 新链接https://scholar.google.com.hk/scholar?start=0&q=%E2%80%9CEntrepreneurial+failure%E2%80%9D+OR+%E2%80%9Cbusiness+failure%E2%80%9D&hl=zh-CN&as_sdt=1,47&as_ylo=2010&as_vis=1
-            self.url_head = r'https://scholar.google.com.hk/scholar?hl=zh-CN'
+            # self.url_head = r'https://scholar.google.com.hk/scholar?hl=zh-CN'
+            self.url_head = r'https://scholar.google.com.hk/scholar?hl=en'
             self.url_tail = ''
             self.url_tail = self.url_tail + '&q=' + urllib.parse.quote(searchContent)    # 设置搜索的问题
             # 限定时间
@@ -549,6 +552,15 @@ class Ui_Widget(QtWidgets.QMainWindow):
         gc.collect()
         return
 
+    def create_work_path(self, file_path):
+        directory = os.path.dirname(file_path)
+
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+            print(f"目录已创建: {directory}")
+        else:
+            print(f"目录已存在: {directory}")
+
     def start_crawler(self): # url_head, url_tail, self
         # while self.__running.isSet():
             # self.__flag.wait()      # 为True时立即返回, 为False时阻塞直到内部的标识位为True后返回
@@ -557,8 +569,11 @@ class Ui_Widget(QtWidgets.QMainWindow):
         self.updated.emit('\n\n开始爬取...\n大约需要 {}min ，请耐心等待！'.format(pre_time))
         pages = self.spinBoxSearchPages.value()    # 获取爬取的页数
         file_path = self.lineEditResultSaveFile.text()    # 获取结果保存文件
+        self.create_work_path(file_path)
         detailFlag = self.checkBoxDetails.isChecked()    # 是否爬取论文详情
         pdfSavePath = self.lineEditPDFSavePath.text()    # PDF下载保存路径
+        if pdfSavePath :
+            self.create_work_path(pdfSavePath)
         # 循环提取多页的内容
         with open('./config/config.txt', 'r', encoding='utf-8') as proxy_file:  # 打开文件
             lines = proxy_file.readlines()  # 读取所有行
@@ -641,7 +656,7 @@ class Ui_Widget(QtWidgets.QMainWindow):
                 article_list = GoogleScholar.parse_data(html, page_count, detailFlag)    # 解析得到的数据
                 # with open(file_path.replace("xlsx", "txt"), "a", encoding='utf8') as f:
                 #     f.write(str(article_list))
-                GoogleScholar.sava_to_excel(article_list, file_path)    # 将得到的数据保存到Excel
+                GoogleScholar.save_to_excel(article_list, file_path)    # 将得到的数据保存到Excel
             except Exception as e:
                 print(str(e))
                 self.updated.emit('解析出错！')

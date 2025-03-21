@@ -179,12 +179,19 @@ def parse_data(html, page_count, detailFlag):
     
         # 提取引用次数
         try:
-           citation_area = section[0].xpath(section_xpath + '//div[@class="gs_fl"]/a[3]')    # 选取引用次数所在区域
-           # print(etree.tostring(citation_area[0]))
-           citation = citation_area[0].xpath('string(.)').strip().split('：', 1)[1]    # 提取引用次数所在区域的文本
+           citation_area = section[0].xpath(section_xpath + '//div[@class="gs_fl gs_flb"]/a[3]')    # 选取引用次数所在区域
+           #print(etree.tostring(citation_area[0]))
+           citation = citation_area[0].xpath('string(.)').strip().replace('Cited by ', '').strip()
         except Exception:
-            citation = '0'
+            citation = '0'    
         print('Citation: ' + citation)
+
+        try:
+            citation_url = citation_area[0].get("href")
+        except Exception:
+            citation_url = ''
+
+        print('Citation_url: ' + citation_url)
     
         # 提取论文摘要，这个摘要不完整，待补全
         abstract_area = section[0].xpath(section_xpath + '//div[@class="gs_rs"]')    # 取出abstract所在的区域
@@ -316,7 +323,9 @@ def parse_data(html, page_count, detailFlag):
                 print(paper_link)
 
         # 构造字典，加入文章列表
-        article_dict = {'Title': title, 'Journal': journal, 'Authors': authors, 'Year': year, 'Citation': citation, 'Abstract': abstract, "PDF Link": pdf_link[0]}
+        article_dict = {'Title': title, 'Journal': journal, 'Authors': authors, 'Year': year, 
+                        'Citation': citation, 'Citation_url': citation_url,
+                        'Abstract': abstract, "PDF Link": pdf_link[0]}
         # print('ArticleDict: ' + str(article_dict))
         article_list.append(article_dict)
 
@@ -325,44 +334,32 @@ def parse_data(html, page_count, detailFlag):
         time.sleep(delay_time)    # 随机延时一段时间，对付狗贼谷歌
         print('为您延时 ' + str(delay_time) + 's 成功！')    # 随机延迟，防止反爬识别
         print('-------------------------------------------------------------------------------')
-    del agents,agent,headers,proxies,section_xpath,section,title_area,title,paper_link,authors_area,authors_journal_year_site,authors_journal_year_site_list,journal,authors,site,year,citation_area,citation,abstract_area,abstract,pdf_link_area,pdf_link,article_dict
+    del agents,agent,headers,proxies,section_xpath,section,title_area,title,paper_link,authors_area,authors_journal_year_site,authors_journal_year_site_list,journal,authors,site,year,citation_area,citation, citation_url,abstract_area,abstract,pdf_link_area,pdf_link,article_dict
     gc.collect()
     return article_list
 
-# 保存数据到Excel
-def sava_to_excel(article_list, file_path):
-    #将字典列表转换为DataFrame
-    dataframe = pd.DataFrame(list(article_list))
-    #指定字段顺序
-    order = ['Title', 'Journal', 'Authors', 'Year', 'Citation', 'Abstract', "PDF Link"]
+def save_to_excel(article_list, file_path):
+    # 将字典列表转换为 DataFrame
+    dataframe = pd.DataFrame(article_list)
+
+    # 指定字段顺序
+    order = ['Title', 'Journal', 'Authors', 'Year', 'Citation', 'Citation_url', 'Abstract', "PDF Link"]
     dataframe = dataframe[order]
-    #将列名替换为相应列名
-    columns_map = {
-       'Title': 'Title', 
-       'Journal': 'Journal', 
-       'Authors': 'Authors', 
-       'Year': 'Year', 
-       'Citation': 'Citation', 
-       'Abstract': 'Abstract', 
-       "PDF Link": 'PDF Link'
-    }
-    dataframe.rename(columns = columns_map,inplace = True)
-    #指定生成的Excel表格名称
-    # file_path = pd.ExcelWriter('GoogleScholar.xlsx')
-    #替换空单元格
-    dataframe.fillna(' ',inplace = True)
-    write_file = pd.ExcelWriter(file_path)
-    if os.path.isfile(write_file):
-        # 读取原始内容，追加新内容
-        origin_data = pd.read_excel(write_file, engine='openpyxl')
-        dataframe = origin_data.append(dataframe, ignore_index=True, sort=False)
-    #输出
-    dataframe.to_excel(write_file,encoding = 'utf-8',index = False)
-    #保存表格
-    write_file.save()
-    del dataframe
-    del order
-    del columns_map
+
+    # 替换空单元格
+    dataframe.fillna(' ', inplace=True)
+
+    # 如果文件已存在，先读取旧数据再合并
+    if os.path.isfile(file_path):
+        existing_data = pd.read_excel(file_path, engine='openpyxl')
+        dataframe = pd.concat([existing_data, dataframe], ignore_index=True)
+
+    # 以 `with` 语句写入 Excel，避免文件未保存
+    with pd.ExcelWriter(file_path, engine='openpyxl', mode='w') as writer:
+        dataframe.to_excel(writer, index=False, encoding='utf-8')
+
+    # 清理内存
+    del dataframe, order
     gc.collect()
     return
 
